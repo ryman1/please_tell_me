@@ -4,8 +4,8 @@ import tweepy
 import json
 import re
 
-def wordreplace(sentance, mapfile):
-    sentencelist = sentance.split()
+def wordreplace(sentence, mapfile):
+    sentencelist = sentence.split()
     with open(mapfile) as f:
         maplist = f.readlines()
     # dict that tracks if a word has already been replaced
@@ -55,26 +55,15 @@ def wordreplace(sentance, mapfile):
                         replacements = zip(indexestoreplace, mappingdict[key].split())
                         for replacement in replacements:
                             sentencelist[replacement[0]] = replacement[1]
-                    # else:
-                        # print('Some or all of these words have already been replaced')
-                # print('Phrase to find: ' + phrasetofind)
-                # print('Checking against ' + wordsbeingchecked)
                 wordsbeingchecked = ''
-    finalsentance = ''
+    sentencelist[0] = sentencelist[0].capitalize()
+    finalsentence = ''
     for word in sentencelist:
-        finalsentance += word + ' '
-    return finalsentance.rstrip().capitalize()
-            # searchpattern = re.compile(phrasetofind, re.IGNORECASE)
-            # if searchpattern.search(sentance):
-            #     # Check whether the match is a word that was already replaced
-            #     for wordnumber in range(0,len(sentance.split())):
-            #         for word in phrasetofind.split():
-            #
-            #     newsentance = re.sub(' ' + phrasetofind + ' ', ' ' + mappingdict[key] + ' ', sentance)
-            # # Mark any words that have changed, so we don't replace them again
-            # for wordnumber in range(0, len(newsentance.split())):
-            #     if newsentance[wordnumber] != sentance[wordnumber]:
-            #         wordreplaced[wordnumber] = True
+        finalsentence += word + ' '
+    return finalsentence.rstrip().replace('?', '.')
+
+def sendtweet(message, to, inreplyto=None):
+    api.update_status(status='@' + to + ' ' + message, in_reply_to_status_id=inreplyto)
 
 if __name__ == '__main__':
     with open('config.json') as configfile:
@@ -82,19 +71,37 @@ if __name__ == '__main__':
     auth = tweepy.OAuthHandler(config['CONSUMER_KEY'], config['CONSUMER_SECRET'])
     auth.set_access_token(config['ACCESS_KEY'], config['ACCESS_SECRET'])
     api = tweepy.API(auth)
-
+    with open('greatestid') as g:
+        greatestid = g.readline()
+        tempgreatestid = int(greatestid)
     for tweet in tweepy.Cursor(api.search,
-                               q="please tell me",
+                               q="please tell me that",
                                rpp=100,
                                result_type="recent",
                                include_entities=True,
-                               lang="en").items(200):
+                               lang="en",
+                               since_id=int(greatestid)
+                               ).items(500):
         try:
             searchresult = re.search(r'^[pP]lease tell me', tweet.text)
             if searchresult:
                 print('Tweet: ' + tweet.text)
-                newtweet = re.sub('[pP]lease tell me', '', tweet.text)
-                print('Tweet Reply: ' + wordreplace(newtweet, 'wordsubstitutions') + '\n')
+                newtweet = re.sub('([pP]lease)? tell me( [tT]hat)?', '', tweet.text)
+                newtweet = wordreplace(newtweet, 'wordsubstitutions')
+                print('Tweet Reply: ' + newtweet + '\n')
+                print('sent: ' + str(tweet.created_at))
+                send = raw_input('send this tweet?(y/n)')
+                if send == 'y':
+                    sendtweet(newtweet, tweet.user.screen_name, tweet.id)
+                    print('Tweet sent')
+                    if tweet.id > tempgreatestid:
+                        tempgreatestid = tweet.id
         except UnicodeEncodeError:
             pass
     pass
+    if not greatestid:
+        greatestid = '0'
+    # Update the greatest id that we've tweeted to, so we don't reply to old stuff.
+    if tempgreatestid > long(greatestid):
+        with open('greatestid', 'w') as gid:
+            gid.write(str(tempgreatestid))
