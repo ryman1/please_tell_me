@@ -43,8 +43,8 @@ def wordreplace(sentence, mapfile):
                     for num in range(wordnumber, wordnumber+numofwords):
                         # print num
                         indexestoreplace.append(num)
+                    allowedtoreplace = True
                     for index in indexestoreplace:
-                        allowedtoreplace = True
                         # If this word has already been replaced before
                         if wordreplaced[index]:
                             allowedtoreplace = False
@@ -52,8 +52,17 @@ def wordreplace(sentence, mapfile):
                             break
                     if allowedtoreplace:
                         # print 'we are allowed to replace'
-                        wordreplaced[index] = True
-                        replacements = zip(indexestoreplace, mappingdict[key].split())
+                        for i in indexestoreplace:
+                            wordreplaced[i] = True
+                        # if len(indexestoreplace) == len(mappingdict):
+                            replacements = zip(indexestoreplace, mappingdict[key].split())
+                        # If we're replace multpile words with fewer words
+                        if len(indexestoreplace) > len(mappingdict[key].split()):
+                            lengthdiff = len(indexestoreplace) - len(mappingdict[key].split())
+                            for wordnumbertoremove in range(indexestoreplace[0]+1, lengthdiff+1):
+                                sentencelist.pop(wordnumbertoremove)
+                                del wordreplaced[wordnumbertoremove]
+                                print wordnumbertoremove
                         for replacement in replacements:
                             sentencelist[replacement[0]] = replacement[1]
                 wordsbeingchecked = ''
@@ -87,7 +96,7 @@ if __name__ == '__main__':
             searchresult = re.search(r'^[pP]lease tell me', tweet.text)
             if searchresult:
                 print('Tweet: ' + tweet.text)
-                newtweet = re.sub('([pP]lease)? tell me( [tT]hat)?', '', tweet.text)
+                newtweet = re.sub('([pP]lease)? tell me', '', tweet.text)
                 newtweet = wordreplace(newtweet, 'wordsubstitutions')
                 print('Tweet Reply: ' + newtweet + '\n')
                 print('sent: ' + str(tweet.created_at))
