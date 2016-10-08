@@ -4,6 +4,7 @@ import tweepy
 import json
 import re
 
+
 def wordreplace(sentence, mapfile):
     sentencelist = sentence.split()
     with open(mapfile) as f:
@@ -76,7 +77,7 @@ if __name__ == '__main__':
         tempgreatestid = int(greatestid)
     for tweet in tweepy.Cursor(api.search,
                                q="please tell me that",
-                               rpp=100,
+                               rpp=300,
                                result_type="recent",
                                include_entities=True,
                                lang="en",
