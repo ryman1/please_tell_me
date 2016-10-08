@@ -3,6 +3,7 @@
 import tweepy
 import json
 import re
+import collections
 
 
 def wordreplace(sentence, mapfile):
@@ -17,7 +18,7 @@ def wordreplace(sentence, mapfile):
     # for word in sentance.split():
     #     sentancewords.append([word, False])
     # Create a dict of all the word replacements
-    mappingdict = {}
+    mappingdict = collections.OrderedDict()
     for line in maplist:
         wordkeys = line.split(':')[0].split(',')
         wordkeys = tuple([item.lower() for item in wordkeys])
@@ -93,17 +94,28 @@ if __name__ == '__main__':
                                since_id=int(greatestid)
                                ).items(500):
         try:
-            searchresult = re.search(r'^[pP]lease tell me', tweet.text)
+            searchresult = re.search(r'^[pP]lease tell me (?!(who|what|where|when|how|why|that(?!\'s)|more|about))', tweet.text)
             if searchresult:
                 print('Tweet: ' + tweet.text)
+                # Remove Please tell me
                 newtweet = re.sub('([pP]lease)? tell me', '', tweet.text)
+                # remove periods from mr mrs and dr
+                newtweet = re.sub(r'([mMdDsS][rR][s]?)\.', r'\1', newtweet)
+                # Use only the first sentence
+                try:
+                    newtweet = re.search(r'(^.*?(!|\.)+)', newtweet).group(0)
+                except AttributeError:
+                    pass
+                # remove urls
+                newtweet = re.sub(r'http.*?( |$)', '', newtweet)
+                # substitute words
                 newtweet = wordreplace(newtweet, 'wordsubstitutions')
                 print('Tweet Reply: ' + newtweet + '\n')
                 print('sent: ' + str(tweet.created_at))
                 send = raw_input('send this tweet?(y/n)')
                 if send == 'y':
                     sendtweet(newtweet, tweet.user.screen_name, tweet.id)
-                    print('Tweet sent')
+                    print('Tweet sent\n')
                     if tweet.id > tempgreatestid:
                         tempgreatestid = tweet.id
         except UnicodeEncodeError:
