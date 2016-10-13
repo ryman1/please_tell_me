@@ -4,6 +4,7 @@ import tweepy
 import json
 import re
 import collections
+import time
 
 
 def wordreplace(sentence, mapfile):
@@ -73,6 +74,7 @@ def wordreplace(sentence, mapfile):
         finalsentence += word + ' '
     return finalsentence.rstrip().replace('?', '.')
 
+
 def sendtweet(message, to, inreplyto=None):
     api.update_status(status='@' + to + ' ' + message, in_reply_to_status_id=inreplyto)
 
@@ -85,45 +87,52 @@ if __name__ == '__main__':
     with open('greatestid') as g:
         greatestid = g.readline()
         tempgreatestid = int(greatestid)
-    for tweet in tweepy.Cursor(api.search,
-                               q="please tell me that",
-                               rpp=300,
-                               result_type="recent",
-                               include_entities=True,
-                               lang="en",
-                               since_id=int(greatestid)
-                               ).items(500):
-        try:
-            searchresult = re.search(r'^[pP]lease tell me (?!(who|what|where|when|how|why|that(?!\'s)|more|about))', tweet.text)
-            if searchresult:
-                print('Tweet: ' + tweet.text)
-                # Remove Please tell me
-                newtweet = re.sub('([pP]lease)? tell me', '', tweet.text)
-                # remove periods from mr mrs and dr
-                newtweet = re.sub(r'([mMdDsS][rR][s]?)\.', r'\1', newtweet)
-                # Use only the first sentence
-                try:
-                    newtweet = re.search(r'(^.*?(!|\.|\?)+)', newtweet).group(0)
-                except AttributeError:
-                    pass
-                # remove urls
-                newtweet = re.sub(r'http.*?( |$)', '', newtweet)
-                # substitute words
-                newtweet = wordreplace(newtweet, 'wordsubstitutions')
-                print('Tweet Reply: ' + newtweet + '\n')
-                print('sent: ' + str(tweet.created_at))
-                send = raw_input('send this tweet?(y/n)')
-                if send == 'y':
-                    sendtweet(newtweet, tweet.user.screen_name, tweet.id)
-                    print('Tweet sent\n')
-                    if tweet.id > tempgreatestid:
-                        tempgreatestid = tweet.id
-        except UnicodeEncodeError:
-            pass
-    pass
-    if not greatestid:
-        greatestid = '0'
-    # Update the greatest id that we've tweeted to, so we don't reply to old stuff.
-    if tempgreatestid > long(greatestid):
-        with open('greatestid', 'w') as gid:
-            gid.write(str(tempgreatestid))
+    tweetssent = 0
+    while True:
+        for tweet in tweepy.Cursor(api.search,
+                                   q="please tell me that",
+                                   rpp=300,
+                                   result_type="recent",
+                                   include_entities=True,
+                                   lang="en",
+                                   since_id=int(greatestid)
+                                   ).items(500):
+            try:
+                searchresult = re.search(r'^[pP]lease tell me (?!(who|what|where|when|how|why|that(?!\'s)|more|about))', tweet.text)
+                if searchresult:
+                    print('Tweet: ' + tweet.text)
+                    # Remove Please tell me
+                    newtweet = re.sub('([pP]lease)? tell me', '', tweet.text)
+                    # remove periods from mr mrs and dr
+                    newtweet = re.sub(r'([mMdDsS][rR][s]?)\.', r'\1', newtweet)
+                    # Use only the first sentence
+                    try:
+                        newtweet = re.search(r'(^.*?(!|\.|\?)+)', newtweet).group(0)
+                    except AttributeError:
+                        pass
+                    # remove urls
+                    newtweet = re.sub(r'http.*?( |$)', '', newtweet)
+                    if len(newtweet) <= int(config['tweet_length_limit']):
+                        # substitute words
+                        newtweet = wordreplace(newtweet, 'wordsubstitutions')
+                        print('Tweet Reply: ' + newtweet + '\n')
+                        print('sent: ' + str(tweet.created_at))
+                        sendtweet(newtweet, tweet.user.screen_name, tweet.id)
+                        print('Tweet sent\n')
+                        tweetssent += 1
+                        if tweet.id > tempgreatestid:
+                            tempgreatestid = tweet.id
+                    else:
+                        continue
+            except UnicodeEncodeError:
+                pass
+            if tweetssent >= int(config['tweets_to_send_per_run']):
+                break
+        if not greatestid:
+            greatestid = '0'
+        # Update the greatest id that we've tweeted to, so we don't reply to old stuff.
+        if tempgreatestid > long(greatestid):
+            with open('greatestid', 'w') as gid:
+                gid.write(str(tempgreatestid))
+        print('sleeping for ' + config['seconds_sleep_between_runs'] + ' seconds.')
+        time.sleep(int(config['seconds_sleep_between_runs']))
