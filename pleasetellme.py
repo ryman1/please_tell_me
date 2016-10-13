@@ -103,7 +103,7 @@ if __name__ == '__main__':
                 newtweet = re.sub(r'([mMdDsS][rR][s]?)\.', r'\1', newtweet)
                 # Use only the first sentence
                 try:
-                    newtweet = re.search(r'(^.*?(!|\.)+)', newtweet).group(0)
+                    newtweet = re.search(r'(^.*?(!|\.|\?)+)', newtweet).group(0)
                 except AttributeError:
                     pass
                 # remove urls
