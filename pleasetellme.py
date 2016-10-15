@@ -139,5 +139,6 @@ if __name__ == '__main__':
         if tempgreatestid > long(greatestid):
             with open('greatestid', 'w') as gid:
                 gid.write(str(tempgreatestid))
+        greatestid = tempgreatestid
         print('sleeping for ' + config['seconds_sleep_between_runs'] + ' seconds.\n')
         time.sleep(int(config['seconds_sleep_between_runs']))
