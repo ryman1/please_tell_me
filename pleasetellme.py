@@ -89,6 +89,7 @@ if __name__ == '__main__':
         tempgreatestid = int(greatestid)
     tweetssent = 0
     while True:
+        print('Performing new search')
         for tweet in tweepy.Cursor(api.search,
                                    q="please tell me that",
                                    rpp=300,
