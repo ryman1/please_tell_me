@@ -96,7 +96,7 @@ if __name__ == '__main__':
                                    include_entities=True,
                                    lang="en",
                                    since_id=int(greatestid)
-                                   ).items(500):
+                                   ).items(1000):
             try:
                 print('Search result: ' + tweet.text)
                 searchresult = re.search(r'^[pP]lease tell me (?!(who|what|where|when|how|why|that(?!\'s)|more|about))', tweet.text)
@@ -124,10 +124,10 @@ if __name__ == '__main__':
                         if tweet.id > tempgreatestid:
                             tempgreatestid = tweet.id
                     else:
-                        print('Tweet too long to reply to.')
+                        print('Tweet too long to reply to.\n')
                         continue
                 else:
-                    print('Tweet not in a replyable format.')
+                    print('Tweet not in a replyable format.\n')
             except UnicodeEncodeError:
                 pass
             if tweetssent >= int(config['tweets_to_send_per_run']):
@@ -138,5 +138,5 @@ if __name__ == '__main__':
         if tempgreatestid > long(greatestid):
             with open('greatestid', 'w') as gid:
                 gid.write(str(tempgreatestid))
-        print('sleeping for ' + config['seconds_sleep_between_runs'] + ' seconds.')
+        print('sleeping for ' + config['seconds_sleep_between_runs'] + ' seconds.\n')
         time.sleep(int(config['seconds_sleep_between_runs']))
