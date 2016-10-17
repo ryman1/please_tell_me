@@ -87,8 +87,8 @@ if __name__ == '__main__':
     with open('greatestid') as g:
         greatestid = g.readline()
         tempgreatestid = int(greatestid)
-    tweetssent = 0
     while True:
+        tweetssent = 0
         print('Performing new search')
         for tweet in tweepy.Cursor(api.search,
                                    q="please tell me that",
