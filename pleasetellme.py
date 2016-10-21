@@ -100,7 +100,7 @@ if __name__ == '__main__':
                                    ).items(1000):
             try:
                 print('Search result: ' + tweet.text)
-                searchresult = re.search(r'^[pP]lease tell me (?!(who|what|where|when|how|why|that(?!\'s)|more|about))', tweet.text)
+                searchresult = re.search(r'^[pP]lease tell me (?!(who|what|where|when|how|if|why|that(?!\'s)|more|about))', tweet.text)
                 if searchresult:
                     print('Tweet can be replied to.')
                     # Remove Please tell me
@@ -142,3 +142,4 @@ if __name__ == '__main__':
         greatestid = tempgreatestid
         print('sleeping for ' + config['seconds_sleep_between_runs'] + ' seconds.\n')
         time.sleep(int(config['seconds_sleep_between_runs']))
+        #todo throw out tweet if it's in reply to something else.
